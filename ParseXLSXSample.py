@@ -47,12 +47,15 @@ def ReadSampleFile(filename=""):
 				dict_row['Density']=worksheet.cell(row, 5).value
 				dict_row['MolarMass']=0
 				dict_row['SourceCoordinates']=[0,0,0] # координаты источника относительно центра системы
+				dict_row['SampleCoordinates']=[0,0,-7.5]
 				PosZ_str=str(worksheet.cell(row, 7).value)
 				PosY_str=str(worksheet.cell(row, 8).value)
 				if PosZ_str.find('34')>0:#образец стоял далеко от генератора
 					dict_row['SourceCoordinates'][0]=55.5
+					dict_row['SampleCoordinates'][0]=386-dict_row['Thickness']
 				else:
 					dict_row['SourceCoordinates'][0]=6+dict_row['Thickness']+1.5
+					dict_row['SampleCoordinates'][0]=338
 				PosY_str=PosY_str.replace(' move box','')
 				dict_row['SourceCoordinates'][2]=float(PosY_str)
 				#dict_row['PositionZ']=worksheet.cell(row, 3).value
