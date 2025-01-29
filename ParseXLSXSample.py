@@ -15,16 +15,27 @@ def UpdateLocalSampleTable(Username,IP,Port):
 
 def TestNumbersFromTable(value):
 	result=[]
-	if value.find('-') > 0:
+	if not value:
+		return []
+	if str(value).find('-') > 0:
 		splitted=value.split('-')
-		for i in range(int(splitted[0]),int(splitted[1])+1):
-			result.append(int(i))
-		return result
+		#print(splitted)
+		try:
+			for i in range(int(splitted[0]),int(splitted[1])+1):
+				result.append(int(i))
+			return result
+		except:
+			return []
 	else:
-		splitted=value.split(',')
+		splitted=str(value).split(',')
+		#print(splitted)
 		for i in splitted:
-			result.append(int(i))
+			try:
+				result.append(int(i))
+			except:
+				continue
 		return result
+	return []
 
 def ReadSampleFile(filename=""):
 	if len(filename)==0:
@@ -41,6 +52,8 @@ def ReadSampleFile(filename=""):
 		if key:
 			if key.isnumeric():
 				#print(key)
+				Bad=worksheet.cell(row, 10).value
+				BadRuns=TestNumbersFromTable(Bad)
 				dict_row['Sample']=worksheet.cell(row, 2).value
 				dict_row['Thickness']=worksheet.cell(row, 3).value
 				dict_row['Mass']=float(worksheet.cell(row, 4).value)
@@ -71,5 +84,9 @@ def ReadSampleFile(filename=""):
 						dict_row['NAtoms'].append(formula.element[i])
 					#print(formula.element,formula.formula_weight)
 				for i in runs:
+					if i in BadRuns:
+						dict_row['Bad']=True
+					else:
+						dict_row['Bad']=False
 					dict_res[i]=dict_row
 	return dict_res
