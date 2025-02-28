@@ -54,7 +54,7 @@ def ReadSampleDataFile(filename=""):
 		if os.path.isfile(LocalPath):
 			filename=LocalPath
 	workbook = openpyxl.load_workbook(filename,data_only=True)
-	worksheet = workbook['SamplesInfo']
+	worksheet = workbook['Sheet']
 	dict_res={}
 	#берем ключи из файла:
 	keys=[]
@@ -87,6 +87,7 @@ def ReadSampleDataFile(filename=""):
 	return dict_res
 
 def ReadSampleFile(filename=""):
+	AverageBoxMass={10: 341, 20: 365, 30: 408, 40: 466}
 	if len(filename)==0:
 		LocalPath=os.path.dirname(inspect.getfile(inspect.currentframe()))+"/samples_standard_boxes_info.xlsx"
 		#print(LocalPath)
@@ -101,49 +102,64 @@ def ReadSampleFile(filename=""):
 		if key:
 			if key.isnumeric():
 				#print(key)
-				Bad=worksheet.cell(row, 10).value
-				BadRuns=TestNumbersFromTable(Bad)
-				dict_row['Sample']=worksheet.cell(row, 2).value
-				dict_row['Thickness']=worksheet.cell(row, 3).value
-				dict_row['Mass']=float(worksheet.cell(row, 4).value)
-				dict_row['Density']=worksheet.cell(row, 5).value
-				dict_row['MolarMass']=0
-				dict_row['SourceCoordinates']=[0,0,-7.5] # координаты источника относительно центра системы
-				dict_row['SampleCoordinates']=[0,0,-7.5]
-				PosZ_str=str(worksheet.cell(row, 7).value)
-				PosY_str=str(worksheet.cell(row, 8).value)
-				if PosZ_str.find('34')>-1:#образец стоял далеко от генератора
-					dict_row['SourceCoordinates'][0]=387.5
-					dict_row['SampleCoordinates'][0]=386-dict_row['Thickness']/2
-					dict_row['Displaced']=True
-				else:
-					dict_row['SourceCoordinates'][0]=345.5+dict_row['Thickness']+1.5
-					dict_row['SampleCoordinates'][0]=338+dict_row['Thickness']/2
-					dict_row['Displaced']=False
-				PosY_str=PosY_str.replace(' move box','')
-				dict_row['SourceCoordinates'][2]=float(PosY_str)
-				#dict_row['PositionZ']=worksheet.cell(row, 3).value
-				runs=TestNumbersFromTable(str(worksheet.cell(row, 6).value))
-				#print(dict_row['Sample'])
-				if not (dict_row['Sample']=='Bskgr'):
-					formula=ChemFormula(dict_row['Sample'])
-					dict_row['MolarMass']=formula.formula_weight
-					dict_row['Elements']=[]
-					dict_row['NAtoms']=[]
-					for i in formula.element.keys():
-						dict_row['Elements'].append(i)
-						dict_row['NAtoms'].append(formula.element[i])
-					#print(formula.element,formula.formula_weight)
-				else:
+				try:
+					#print(worksheet.cell(row, 11).value)
+					Bad=worksheet.cell(row, 11).value
+					BadRuns=TestNumbersFromTable(Bad)
+					
+					dict_row['Sample']=worksheet.cell(row, 2).value
+					dict_row['Thickness']=worksheet.cell(row, 3).value
+					dict_row['Mass']=float(worksheet.cell(row, 5).value)
+					dict_row['Density']=worksheet.cell(row, 6).value
 					dict_row['MolarMass']=0
-					dict_row['Elements']=[0]
-					dict_row['NAtoms']=[0]
-					dict_row['Elements'].append("")
-					dict_row['NAtoms'].append(0)
-				for i in runs:
-					if i in BadRuns:
-						dict_row['Bad']=True
+					dict_row['SourceCoordinates']=[0,0,-7.5] # координаты источника относительно центра системы
+					dict_row['SampleCoordinates']=[0,0,-7.5]
+					PosZ_str=str(worksheet.cell(row, 8).value)
+					PosY_str=str(worksheet.cell(row, 9).value)
+					if PosZ_str.find('34')>-1:#образец стоял далеко от генератора
+						dict_row['SourceCoordinates'][0]=391.5# нашел ошибку при перепроверке
+						dict_row['SampleCoordinates'][0]=386-dict_row['Thickness']/2
+						dict_row['Displaced']=True
 					else:
-						dict_row['Bad']=False
-					dict_res[i]=dict(dict_row)
+						dict_row['SourceCoordinates'][0]=345.5+dict_row['Thickness']+1.5
+						dict_row['SampleCoordinates'][0]=338+dict_row['Thickness']/2
+						dict_row['Displaced']=False
+					PosY_str=PosY_str.replace(' move box','')
+					dict_row['SourceCoordinates'][2]=float(PosY_str)
+					BoxMass=worksheet.cell(row, 4).value
+					#print(BoxMass)
+					if str(BoxMass).isnumeric():
+						dict_row['BoxMass']=float(BoxMass)
+					else:
+						dict_row['BoxMass']=float(AverageBoxMass[int(dict_row['Thickness'])])
+					#dict_row['PositionZ']=worksheet.cell(row, 3).value
+					runs=TestNumbersFromTable(str(worksheet.cell(row, 7).value))
+					#print(dict_row['Sample'])
+					#print(dict_row)
+					if not (dict_row['Sample']=='Bskgr'):
+						formula=ChemFormula(dict_row['Sample'])
+						dict_row['MolarMass']=formula.formula_weight
+						dict_row['Elements']=[]
+						dict_row['NAtoms']=[]
+						for i in formula.element.keys():
+							dict_row['Elements'].append(i)
+							dict_row['NAtoms'].append(formula.element[i])
+						#print(formula.element,formula.formula_weight)
+					else:
+						dict_row['MolarMass']=0
+						dict_row['Elements']=[0]
+						dict_row['NAtoms']=[0]
+						dict_row['Elements'].append("")
+						dict_row['NAtoms'].append(0)
+					#print(dict_row)
+					for i in runs:
+						if i in BadRuns:
+							dict_row['Bad']=True
+						else:
+							dict_row['Bad']=False
+						dict_res[i]=dict(dict_row)
+							#print(dict_row)
+							
+				except:
+					continue
 	return dict_res
